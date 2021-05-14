@@ -12,8 +12,8 @@ import (
 
 	"github.com/pmmp/CrashArchive/app"
 	"github.com/pmmp/CrashArchive/app/crashreport"
-	"github.com/pmmp/CrashArchive/app/template"
 	"github.com/pmmp/CrashArchive/app/database"
+	"github.com/pmmp/CrashArchive/app/template"
 	"github.com/pmmp/CrashArchive/app/webhook"
 )
 
@@ -62,18 +62,6 @@ func SubmitPost(db *database.DB, wh *webhook.Webhook, config *app.Config) http.H
 		if err != nil {
 			//this panic will be recovered in the above deferred function
 			panic(err)
-		}
-
-		if report.Data.General.Name != "PocketMine-MP" {
-			log.Printf("spoon detected from: %s\n", r.RemoteAddr)
-			sendError(w, r, "", http.StatusTeapot, isAPI)
-			return
-		}
-
-		if report.Data.General.GIT == strings.Repeat("00", 20) || strings.HasSuffix(report.Data.General.GIT, "-dirty") {
-			log.Printf("invalid git hash %s in report from: %s\n", report.Data.General.GIT, r.RemoteAddr)
-			sendError(w, r, "", http.StatusTeapot, isAPI)
-			return
 		}
 
 		pluginsList, ok := report.Data.Plugins.(map[string]interface{})
