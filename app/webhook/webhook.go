@@ -90,7 +90,6 @@ func (w *Webhook) Post(entry ReportListEntry) {
 	buf := new(bytes.Buffer)
 	enc := json.NewEncoder(buf)
 	enc.Encode(data)
-	fmt.Println(buf.String())
 	encoded := buf.Bytes()
 
 	for _, webhookURL := range w.hookURLs {
