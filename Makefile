@@ -1,8 +1,8 @@
 all: run
 
 build:
-	go build -o ./bin/crasharchive ./cmd/crasharchive.go
-	go build -o ./bin/crasharchive-adduser ./cmd/crasharchive-adduser.go
+	GOOS=linux GOARCH=amd64 go build -o ./bin/crasharchive ./cmd/crasharchive.go
+	GOOS=linux GOARCH=amd64 go build -o ./bin/crasharchive-adduser ./cmd/crasharchive-adduser.go
 
 run: build
 	./bin/crasharchive

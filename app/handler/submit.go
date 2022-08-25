@@ -77,7 +77,7 @@ func SubmitPost(db *database.DB, wh *webhook.Webhook, config *app.Config) http.H
 
 		for _, pattern := range(config.CompiledErrorBlacklistPatterns) {
 			if pattern.MatchString(report.Data.Error.Message) {
-				log.Printf("blacklisted error pattern match in report from: %s", "", r.RemoteAddr)
+				log.Printf("blacklisted error pattern match in report from: %s", r.RemoteAddr)
 				sendError(w, r, "This crashdump is blacklisted", http.StatusUnprocessableEntity, isAPI)
 				return
 			}

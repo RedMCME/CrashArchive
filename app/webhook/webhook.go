@@ -14,30 +14,30 @@ import (
 )
 
 const (
-	reportListSize = 20
-	postTimeThrottle = 30 //minutes
+	reportListSize   = 1
+	postTimeThrottle = 1 //minutes
 )
 
-type Webhook struct{
+type Webhook struct {
 	domain           string
 	hookURLs         []string
 	slackTime        time.Time
 	mux              sync.Mutex
 	postTimeThrottle float64
 
-	reportCount      uint32
-	dupeCount        uint32
-	reportMinId      uint64
-	reportMaxId      uint64
-	reportList       []ReportListEntry
+	reportCount uint32
+	dupeCount   uint32
+	reportMinId uint64
+	reportMaxId uint64
+	reportList  []ReportListEntry
 }
 
 func New(domain string, hookURLs []string, postTimeThrottle uint32) *Webhook {
 	hook := &Webhook{
-		domain:     domain,
-		hookURLs:   hookURLs,
-		slackTime:  time.Now(),
-		reportList: make([]ReportListEntry, 0, reportListSize),
+		domain:           domain,
+		hookURLs:         hookURLs,
+		slackTime:        time.Now(),
+		reportList:       make([]ReportListEntry, 0, reportListSize),
 		postTimeThrottle: float64(postTimeThrottle),
 	}
 	return hook
@@ -65,34 +65,32 @@ func (w *Webhook) Post(entry ReportListEntry) {
 		w.reportList = append(w.reportList, entry)
 	}
 
-	if !w.slackTime.IsZero() && time.Now().Sub(w.slackTime).Minutes() < w.postTimeThrottle {
-		return
-	}
-
 	listUrl := fmt.Sprintf("%s/list?min=%d&max=%d", w.domain, w.reportMinId, w.reportMaxId)
 
 	messageText := make([]string, 0, 20)
 	for _, entry := range w.reportList {
-		messageText = append(messageText, fmt.Sprintf("<%s/view/%d|#%d: %s>", w.domain, entry.ReportId, entry.ReportId, entry.Message))
+		messageText = append(messageText, fmt.Sprintf("[#%d: %s](%s/view/%d)", entry.ReportId, entry.Message, w.domain, entry.ReportId))
 	}
 	t := strings.Join(messageText, "\n")
 	if w.reportCount > uint32(cap(w.reportList)) {
-		t += fmt.Sprintf("\n\n%d more reports not shown. <%s|View the full list>", w.reportCount - uint32(cap(w.reportList)), listUrl)
+		t += fmt.Sprintf("\n\n%d more reports not shown. <%s|View the full list>", w.reportCount-uint32(cap(w.reportList)), listUrl)
 	}
 
 	data := &slackMessage{
+		Content: "<@803263987520241704> <@264465713379409921>",
 		Attachments: []slackAttachment{
 			{
-				Title:      fmt.Sprintf("%d new and %d duplicate reports (%d total) since %s", w.reportCount, w.dupeCount, w.reportCount + w.dupeCount, w.slackTime.Format("2 Jan 2006 15:04")),
-				TitleLink:  listUrl,
-				Color:      "#36a64f",
-				Text:       t,
+				Title:       "Hata oluştu",
+				URL:         listUrl,
+				Color:       16711680,
+				Description: t,
 			},
 		},
 	}
 	buf := new(bytes.Buffer)
 	enc := json.NewEncoder(buf)
 	enc.Encode(data)
+	fmt.Println(buf.String())
 	encoded := buf.Bytes()
 
 	for _, webhookURL := range w.hookURLs {
@@ -109,7 +107,7 @@ func (w *Webhook) Post(entry ReportListEntry) {
 		}
 		defer resp.Body.Close()
 
-		if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode != http.StatusOK && resp.StatusCode != 204 {
 			log.Printf("error happened posting update to webhook %s", webhookURL)
 			log.Println(hex.Dump(buf.Bytes()))
 			log.Println("response Status:", resp.Status)
@@ -131,17 +129,17 @@ func (w *Webhook) Post(entry ReportListEntry) {
 
 type ReportListEntry struct {
 	ReportId uint64
-	Message string
+	Message  string
 }
 
 type slackMessage struct {
-	Attachments []slackAttachment `json:"attachments"`
+	Content     string            `json:"content"`
+	Attachments []slackAttachment `json:"embeds"`
 }
 
 type slackAttachment struct {
-	AuthorName string `json:"author_name"`
-	Title      string `json:"title"`
-	TitleLink  string `json:"title_link"`
-	Color      string `json:"color"`
-	Text       string `json:"text"`
+	Title       string `json:"title"`
+	URL         string `json:"url"`
+	Description string `json:"description"`
+	Color       int    `json:"color"`
 }
