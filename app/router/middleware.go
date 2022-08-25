@@ -2,12 +2,12 @@ package router
 
 import (
 	"fmt"
-	"github.com/pmmp/CrashArchive/app"
-	"github.com/pmmp/CrashArchive/app/user"
 	"log"
-	"net"
 	"net/http"
 	"strings"
+
+	"github.com/pmmp/CrashArchive/app"
+	"github.com/pmmp/CrashArchive/app/user"
 )
 
 var cfConnectingIP = http.CanonicalHeaderKey("Cf-Connecting-Ip")
@@ -43,13 +43,7 @@ func MustBeLogged(next http.Handler) http.Handler {
 func SubmitAllowed(c *app.Config) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			ip, _, err := net.SplitHostPort(r.RemoteAddr)
-			if err != nil {
-				log.Printf("Can't parse remote addr: %v\n", err)
-				_, _ = fmt.Fprintf(w, err.Error())
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			ip := r.RemoteAddr
 
 			if c.SubmitAllowedIpsMap[ip] == "" {
 				log.Println("A request came from the stranger. IP=" + r.RemoteAddr)
