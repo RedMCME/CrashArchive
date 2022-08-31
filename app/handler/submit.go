@@ -24,7 +24,7 @@ func SubmitGet(w http.ResponseWriter, r *http.Request) {
 func SubmitPost(db *database.DB, wh *webhook.Webhook, config *app.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if _, banned := config.IpBanlistMap[r.RemoteAddr]; banned {
-			log.Printf("rejected submission from banned IP: %s\n", r.RemoteAddr);
+			log.Printf("rejected submission from banned IP: %s\n", r.RemoteAddr)
 			sendError(w, r, "", http.StatusTeapot, true)
 			return
 		}
@@ -75,7 +75,7 @@ func SubmitPost(db *database.DB, wh *webhook.Webhook, config *app.Config) http.H
 			}
 		}
 
-		for _, pattern := range(config.CompiledErrorBlacklistPatterns) {
+		for _, pattern := range config.CompiledErrorBlacklistPatterns {
 			if pattern.MatchString(report.Data.Error.Message) {
 				log.Printf("blacklisted error pattern match in report from: %s", r.RemoteAddr)
 				sendError(w, r, "This crashdump is blacklisted", http.StatusUnprocessableEntity, isAPI)
@@ -105,14 +105,14 @@ func SubmitPost(db *database.DB, wh *webhook.Webhook, config *app.Config) http.H
 		}
 
 		if wh != nil {
-			if !report.Duplicate {
-				go wh.Post(webhook.ReportListEntry{
-					ReportId: uint64(id),
-					Message: report.Error.Message,
-				})
-			} else {
+			if report.Duplicate {
 				wh.BumpDupeCounter()
 			}
+
+			go wh.Post(webhook.ReportListEntry{
+				ReportId: uint64(id),
+				Message:  report.Error.Message,
+			})
 		}
 
 		if isAPI {
