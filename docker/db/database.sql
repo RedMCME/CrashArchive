@@ -8,7 +8,7 @@ CREATE TABLE crash_reports (
       version VARCHAR(127) DEFAULT NULL,
       build INT DEFAULT 0,
       file VARCHAR(255),
-      message VARCHAR(255),
+      message VARCHAR(512),
       line INT NOT NULL,
       type VARCHAR(255),
       os VARCHAR(16),

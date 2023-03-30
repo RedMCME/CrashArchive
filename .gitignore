@@ -5,3 +5,4 @@ volumes/
 config/config.json
 docker-compose.yml
 .idea/
+.DS_Store
